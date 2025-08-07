@@ -1,0 +1,27 @@
+# Node.js dependencies
+node_modules/
+
+# Python dependencies
+__pycache__/
+*.pyc
+
+# Visual Studio Code settings
+.vscode/
+
+# Environment files
+.env
+
+# OS generated files
+Thumbs.db
+.DS_Store
+
+# Log files
+*.log
+
+# Build output
+dist/
+build/
+out/
+
+# Coverage reports
+coverage/
