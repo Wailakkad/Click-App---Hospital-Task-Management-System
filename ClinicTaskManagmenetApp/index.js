@@ -1,5 +1,6 @@
 const experss = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const taskRoutes = require('./routes/tasks');
 const userRoutes = require('./routes/users');
@@ -11,6 +12,8 @@ const port = 4000;
 
 app.use(experss.json());
 app.use(experss.urlencoded({ extended: true }));
+app.use(cors());
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);

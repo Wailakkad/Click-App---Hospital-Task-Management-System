@@ -1,23 +1,69 @@
 "use client"
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = async () => {
-    setIsLoading(true);
+ const handleSubmit = async () => {
+  setIsLoading(true);
+  if (!email || !password) {
+    toast.error('Please fill in both fields');
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:4000/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      toast.error('Login failed');
+    }else{
+      toast.success('Login successful');
+    }
+
     
-    // Simulate login process
-    setTimeout(() => {
-      setIsLoading(false);
-      console.log('Login attempt:', { email, password });
-    }, 1500);
-  };
+     
+    const data = await response.json();
+    
+    localStorage.setItem('token', data.token);
+localStorage.setItem('user', JSON.stringify(data.user));
+console.log('Login successful:', data.user.role);
+
+setTimeout(() => {
+  if (data.user.role === 'admin'){
+    router.push('/pages/Dashbord');
+  }else if (data.user.role === 'doctor') {
+    router.push('/pages/DoctorDashboard');
+  } else if (data.user.role === 'nurse') {
+    router.push('/pages/NurseDashboard');
+  } else if (data.user.role === 'reception') {
+    router.push('/pages/ReceptionDashboard');
+  }
+}, 1500); // 1500 milliseconds = 1.5 seconds
+
+    // You can redirect or update UI here
+  } catch (error) {
+    console.error('Login error:', error);
+    toast.error('Login failed. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <Toaster/>
       <div className="max-w-md w-full space-y-8">
         {/* Logo and Header */}
         <div className="text-center">
