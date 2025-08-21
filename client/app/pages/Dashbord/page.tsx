@@ -8,6 +8,7 @@ import Sidebar from '@/components/Sidebar';
 import TopBar from '@/components/TopBar';
 import TaskCard from '@/components/TaskCard';
 import FilterButtons from '@/components/FilterButtons';
+import toast from 'react-hot-toast';
 
 // Types
 interface User {
@@ -36,6 +37,47 @@ interface TaskFormData {
 
 interface AdminTaskAssignmentProps {
   onClose: () => void;
+}
+
+// Loading Component
+function LoadingPage() {
+  return (
+    <div className="flex min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="flex items-center justify-center w-full">
+        <div className="text-center">
+          {/* Logo Section */}
+          <div className="mb-8">
+            <div className="w-20 h-20 bg-gradient-to-br from-teal-400 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <span className="text-white font-bold text-3xl">✓</span>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">ClinicTasks</h1>
+            <p className="text-gray-600">Medical Task Management System</p>
+          </div>
+
+          {/* Loading Animation */}
+          <div className="mb-6">
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-blue-200 rounded-full animate-spin mx-auto"></div>
+              <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin absolute top-0 left-1/2 transform -translate-x-1/2"></div>
+            </div>
+          </div>
+
+          {/* Loading Text */}
+          <div className="space-y-2">
+            <p className="text-lg font-medium text-gray-700">Loading Dashboard...</p>
+            <p className="text-sm text-gray-500">Verifying credentials and permissions</p>
+          </div>
+
+          {/* Progress Dots */}
+          <div className="flex justify-center space-x-2 mt-6">
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // AdminTaskAssignment Component
@@ -320,23 +362,54 @@ export default function Home() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateTask, setShowCreateTask] = useState<boolean>(false);
+  const [isAuthenticating, setIsAuthenticating] = useState<boolean>(true);
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
   const router = useRouter();
 
+  // Authentication and Authorization Check
   useEffect(() => {
-    // Check user role from localStorage
-    const userStr = localStorage.getItem('user');
-    if (!userStr) {
-      router.replace('/');
-      return;
-    }
-    try {
-      const user = JSON.parse(userStr);
-      if (user.role !== 'admin') {
-        router.replace('/pages/unauthorized');
+    const checkAuthAndPermissions = async () => {
+      try {
+        setIsAuthenticating(true);
+        
+        // Simulate minimum loading time for better UX
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Check if user exists in localStorage
+        const userStr = localStorage.getItem('user');
+        const token = localStorage.getItem('token');
+        
+        if (!userStr || !token) {
+          toast.error('No credentials found, redirecting to login...');
+          router.replace('/');
+          return;
+        }
+
+        // Parse user data
+        const user = JSON.parse(userStr);
+        
+        // Check if user has admin role
+        if (user.role !== 'admin') {
+          toast.error('User is not admin, redirecting to unauthorized...');
+          router.replace('/pages/unauthorized');
+          return;
+        }
+
+      
+
+        // If all checks pass
+        toast.success('Authentication successful, showing dashboard');
+        setIsAuthorized(true);
+        
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        router.replace('/');
+      } finally {
+        setIsAuthenticating(false);
       }
-    } catch {
-      router.replace('/');
-    }
+    };
+
+    checkAuthAndPermissions();
   }, [router]);
 
   const getUsers = async (): Promise<void> => {
@@ -368,8 +441,11 @@ export default function Home() {
   };
 
   useEffect(() => {
-    getUsers();
-  }, []);
+    // Only fetch users if authenticated and authorized
+    if (isAuthorized && !isAuthenticating) {
+      getUsers();
+    }
+  }, [isAuthorized, isAuthenticating]);
 
   const generateTasksFromUsers = (users: User[]): Task[] => {
     return users.map((user, index) => ({
@@ -378,7 +454,7 @@ export default function Home() {
       profilePic: user.profileImage,
       title: getTaskByRole(user.role),
       time: 'Today, 9:30 AM',
-      status: Math.random() > 0.7 ? 'Done' : 'In Progress'
+      status: (Math.random() > 0.7 ? 'Done' : 'In Progress') as "Done" | "In Progress" | "Pending"
     }));
   };
 
@@ -397,6 +473,17 @@ export default function Home() {
 
   const tasks = generateTasksFromUsers(users);
 
+  // Show loading page during authentication
+  if (isAuthenticating) {
+    return <LoadingPage />;
+  }
+
+  // Don't render anything if not authorized (redirect is happening)
+  if (!isAuthorized) {
+    return null;
+  }
+
+  // Show data loading state
   if (loading) {
     return (
       <div className="flex min-h-screen bg-gray-50">
@@ -414,6 +501,7 @@ export default function Home() {
     );
   }
 
+  // Show error state
   if (error) {
     return (
       <div className="flex min-h-screen bg-gray-50">
@@ -445,6 +533,7 @@ export default function Home() {
     );
   }
 
+  // Main dashboard content
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />

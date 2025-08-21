@@ -1,9 +1,13 @@
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { MenuItem } from '../types';
+import toast, { Toaster } from 'react-hot-toast';
+
 
 const Sidebar: React.FC = () => {
   const [activeItem, setActiveItem] = useState<string>('Dashboard');
+  const router = useRouter();
 
   const menuItems: MenuItem[] = [
     {
@@ -28,6 +32,28 @@ const Sidebar: React.FC = () => {
       href: '/settings'
     }
   ];
+
+  const handleLogout = () => {
+    try {
+      // Remove token and user from localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+     
+      
+      // Redirect to login page
+      router.push('/');
+      
+      // Optional: Show success message
+      toast.success('Logged out successfully');
+      
+    } catch (error) {
+      toast.error('Error during logout. Please try again.');
+      console.error('Error during logout:', error);
+      // Even if there's an error, still try to redirect
+      router.push('/');
+    }
+  };
 
   return (
     <div className="fixed left-0 top-0 h-full w-64 bg-[#DDE3F4] shadow-lg z-10 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
@@ -75,10 +101,14 @@ const Sidebar: React.FC = () => {
       </nav>
 
       <div className="p-4">
-        <button className="w-full bg-black text-white py-3 px-6 rounded-full font-medium hover:bg-gray-800 transition-colors duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-transform">
+        <button 
+          onClick={handleLogout}
+          className="w-full bg-black text-white py-3 px-6 rounded-full font-medium hover:bg-gray-800 transition-colors duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-transform"
+        >
           Logout
         </button>
       </div>
+      <Toaster />
     </div>
   );
 };
