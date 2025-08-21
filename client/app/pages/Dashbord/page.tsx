@@ -1,14 +1,15 @@
-'use client'
+"use client";
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { ChevronDownIcon, UserIcon, ArrowLeftIcon } from 'lucide-react';
 
-import { useState, useEffect } from 'react';
+// Import your existing components (adjust paths as needed)
 import Sidebar from '@/components/Sidebar';
 import TopBar from '@/components/TopBar';
 import TaskCard from '@/components/TaskCard';
-import { useRouter } from 'next/navigation';
 import FilterButtons from '@/components/FilterButtons';
-import { Task } from '@/types';
 
-// Type for User from your API
+// Types
 interface User {
   _id: string;
   name: string;
@@ -18,77 +19,369 @@ interface User {
   __v: number;
 }
 
-const Home: React.FC = () => {
+interface Task {
+  id: number;
+  name: string;
+  profilePic: string;
+  title: string;
+  time: string;
+  status: "Done" | "In Progress" | "Pending";
+}
+
+interface TaskFormData {
+  title: string;
+  description: string;
+  assignedTo: string;
+}
+
+interface AdminTaskAssignmentProps {
+  onClose: () => void;
+}
+
+// AdminTaskAssignment Component
+function AdminTaskAssignment({ onClose }: AdminTaskAssignmentProps) {
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState<TaskFormData>({
+    title: '',
+    description: '',
+    assignedTo: ''
+  });
+
+  // Fetch users on component mount
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:4000/api/users/AllUsers', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        setUsers(userData);
+      } else {
+        console.error('Failed to fetch users');
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const handleUserSelect = (user: User) => {
+    setSelectedUser(user);
+    setFormData({ ...formData, assignedTo: user._id });
+    setIsDropdownOpen(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.title || !formData.description || !formData.assignedTo) {
+      alert('All fields are required');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:4000/api/tasks/create', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Task created successfully!');
+        // Reset form and close modal
+        setFormData({ title: '', description: '', assignedTo: '' });
+        setSelectedUser(null);
+        onClose(); // Close the task creation view
+      } else {
+        alert(data.message || 'Failed to create task');
+      }
+    } catch (error) {
+      console.error('Error creating task:', error);
+      alert('Server error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role.toLowerCase()) {
+      case 'doctor': return 'text-blue-600 bg-blue-50';
+      case 'nurse': return 'text-green-600 bg-green-50';
+      case 'reception': return 'text-purple-600 bg-purple-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+      {/* Header with Back Button */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+          >
+            <ArrowLeftIcon className="w-5 h-5 text-gray-600" />
+          </button>
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">Create New Task</h2>
+            <p className="text-sm text-gray-600">Assign tasks to staff members</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Task Creation Form - Left Side */}
+        <div className="lg:col-span-2">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Task Title */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Task Title
+              </label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Enter task title"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              />
+            </div>
+
+            {/* Task Description */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Task Description
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Describe the task details..."
+                rows={4}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
+              />
+            </div>
+
+            {/* Staff Assignment Dropdown */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Assign To Staff
+              </label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-left focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 flex items-center justify-between"
+                >
+                  {selectedUser ? (
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                        {selectedUser.profileImage ? (
+                          <img src={selectedUser.profileImage} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <UserIcon className="w-4 h-4 text-gray-500" />
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-gray-900">{selectedUser.name}</span>
+                        <span className={`ml-2 px-2 py-1 text-xs rounded-full ${getRoleColor(selectedUser.role)}`}>
+                          {selectedUser.role}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-gray-500">Select staff member</span>
+                  )}
+                  <ChevronDownIcon className={`w-5 h-5 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Dropdown Menu */}
+                {isDropdownOpen && (
+                  <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                    {users.map((user) => (
+                      <button
+                        key={user._id}
+                        type="button"
+                        onClick={() => handleUserSelect(user)}
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors duration-200 flex items-center space-x-3 border-b border-gray-50 last:border-0"
+                      >
+                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                          {user.profileImage ? (
+                            <img src={user.profileImage} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <UserIcon className="w-4 h-4 text-gray-500" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-gray-900 font-medium">{user.name}</div>
+                          <span className={`px-2 py-1 text-xs rounded-full ${getRoleColor(user.role)}`}>
+                            {user.role}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                  Creating Task...
+                </div>
+              ) : (
+                'Create Task'
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Staff List Sidebar - Right Side */}
+        <div className="lg:col-span-1">
+          <div className="bg-gray-50 rounded-2xl p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Staff Members</h3>
+            
+            <div className="space-y-3">
+              {users.map((user) => (
+                <div
+                  key={user._id}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
+                    selectedUser?._id === user._id
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
+                  }`}
+                  onClick={() => handleUserSelect(user)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                      {user.profileImage ? (
+                        <img src={user.profileImage} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <UserIcon className="w-6 h-6 text-gray-500" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">{user.name}</div>
+                      <span className={`inline-block mt-1 px-2 py-1 text-xs rounded-full ${getRoleColor(user.role)}`}>
+                        {user.role}
+                      </span>
+                    </div>
+                    {selectedUser?._id === user._id && (
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              
+              {users.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <UserIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>No staff members found</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main Home Component
+export default function Home() {
   const [selectedFilter, setSelectedFilter] = useState<string>('ALL');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateTask, setShowCreateTask] = useState<boolean>(false);
   const router = useRouter();
 
   useEffect(() => {
     // Check user role from localStorage
     const userStr = localStorage.getItem('user');
     if (!userStr) {
-      router.replace('/'); // Redirect to login if not logged in
+      router.replace('/');
       return;
     }
     try {
       const user = JSON.parse(userStr);
       if (user.role !== 'admin') {
-        router.replace('/pages/unauthorized'); // Redirect if not admin
+        router.replace('/pages/unauthorized');
       }
     } catch {
       router.replace('/');
     }
   }, [router]);
 
-  // Function to fetch users from your API
- const getUsers = async (): Promise<void> => {
-  try {
-    setLoading(true);
-    setError(null);
+  const getUsers = async (): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    const token = localStorage.getItem('token'); // Get token from localStorage
+      const token = localStorage.getItem('token');
 
-    const response = await fetch('http://localhost:4000/api/users/AllUsers', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+      const response = await fetch('http://localhost:4000/api/users/AllUsers', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const userData: User[] = await response.json();
+      setUsers(userData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch users');
+      console.error('Error fetching users:', err);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const userData: User[] = await response.json();
-    setUsers(userData);
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'Failed to fetch users');
-    console.error('Error fetching users:', err);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // Fetch users when component mounts
   useEffect(() => {
     getUsers();
   }, []);
 
-  // Convert users to tasks format (you can modify this based on your needs)
   const generateTasksFromUsers = (users: User[]): Task[] => {
     return users.map((user, index) => ({
       id: index + 1,
       name: user.name,
       profilePic: user.profileImage,
       title: getTaskByRole(user.role),
-      time: 'Today, 9:30 AM', // You can make this dynamic
-      status: Math.random() > 0.7 ? 'Done' : 'In Progress' // Random status for demo
+      time: 'Today, 9:30 AM',
+      status: Math.random() > 0.7 ? 'Done' : 'In Progress'
     }));
   };
 
-  // Helper function to assign tasks based on role
   const getTaskByRole = (role: string): string => {
     switch (role) {
       case 'doctor':
@@ -102,10 +395,8 @@ const Home: React.FC = () => {
     }
   };
 
-  // Generate tasks from users
   const tasks = generateTasksFromUsers(users);
 
-  // Loading state
   if (loading) {
     return (
       <div className="flex min-h-screen bg-gray-50">
@@ -123,7 +414,6 @@ const Home: React.FC = () => {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="flex min-h-screen bg-gray-50">
@@ -164,34 +454,51 @@ const Home: React.FC = () => {
           <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-900">Medical Tasks</h2>
-              <button
-                onClick={getUsers}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Refresh Users
-              </button>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowCreateTask(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  Create Task
+                </button>
+                <button
+                  onClick={getUsers}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  Refresh Users
+                </button>
+              </div>
             </div>
-            <FilterButtons 
-              selectedFilter={selectedFilter}
-              onFilterChange={setSelectedFilter}
-            />
-          </div>
           
-          {tasks.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">No users found.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-              {tasks.map((task) => (
-                <TaskCard key={task.id} task={task} />
-              ))}
-            </div>
+            {showCreateTask ? (
+              <AdminTaskAssignment onClose={() => setShowCreateTask(false)} />
+            ) : (
+              <>
+                <FilterButtons 
+                  selectedFilter={selectedFilter}
+                  onFilterChange={setSelectedFilter}
+                />
+              </>
+            )}
+          </div>
+        
+          {!showCreateTask && (
+            <>
+              {tasks.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">No users found.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                  {tasks.map((task) => (
+                    <TaskCard key={task.id} task={task} />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
     </div>
   );
-};
-
-export default Home;
+}

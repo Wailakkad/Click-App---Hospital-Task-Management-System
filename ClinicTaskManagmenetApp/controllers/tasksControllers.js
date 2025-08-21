@@ -1,5 +1,5 @@
 const Task = require('../models/Task');
-const User = require('../models/user').User;
+const User = require('../models/user');
 
 
 
@@ -20,12 +20,12 @@ exports.createTask = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
         const newTask = new Task({
-            title,
-            description,
-            assignedTo,
-            createdBy: req.user.id,
-            status: 'pending'
-        });
+    title,
+    description,
+    assegnedTo: assignedTo, // Use the misspelled field name from schema
+    createdBy: req.user.id,
+    status: 'pending'
+});
         await newTask.save();
         res.status(201).json({ message: 'Task created successfully', task: newTask });
 
