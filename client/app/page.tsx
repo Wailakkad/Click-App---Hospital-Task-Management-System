@@ -120,7 +120,7 @@ setTimeout(() => {
                 type="button"
                 className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200 font-medium"
               >
-                Forgot password?
+                <a href="/pages/ForgotP">Forgot password?</a>
               </button>
             </div>
 
