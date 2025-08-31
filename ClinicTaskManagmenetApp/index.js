@@ -13,11 +13,13 @@ const port = 4000;
 app.use(experss.json());
 app.use(experss.urlencoded({ extended: true }));
 app.use(cors());
+app
 
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/users', userRoutes);
+app.use('/uploads', experss.static('uploads'));
 
 
 const DB = async ()=> {

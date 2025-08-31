@@ -152,3 +152,42 @@ if (record.createdAt.getTime() + expiryMs < Date.now()) {
     res.status(500).json({ message: "Server error" });
   }
 }
+
+// POST /api/auth/add-staff
+exports.addStaff = async (req, res) => {
+
+    try{
+        if (!req.user || (req.user.role !== 'admin')) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+        const { name, email, password, role } = req.body;
+        const profileImage = req.file ? req.file.path : null; // Assuming you're using multer for file uploads
+
+        if (!name || !email || !password || !role) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+        const existUser = await User.findOne({ email });
+        if (existUser) {
+            return res.status(400).json({ message: 'User already exists with this email' });
+        }
+        const passwordHash = await bcrypt.hash(password, 10);
+        const newUser = new User({
+            name,
+            email,
+            passwordHash,
+            profileImage,
+            role
+        });
+        await newUser.save();
+        res.status(201).json({ message: 'Staff member added successfully', user: newUser });
+
+    }catch(err){
+        console.log(err);
+        res.status(500).json({ message: 'Server error' });
+        return;
+    }
+
+
+
+
+}
