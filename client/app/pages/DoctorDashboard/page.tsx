@@ -29,7 +29,7 @@ export default function DoctorTasksPage() {
     const userData = localStorage.getItem('user');
     if (!userData) {
       setHasAccess(false);
-      setTimeout(() => router.push('/login'), 2000);
+      setTimeout(() => router.push('/'), 2000);
       return;
     }
 
@@ -59,6 +59,16 @@ export default function DoctorTasksPage() {
 
     fetchTasks();
   }, [router]);
+
+  const handleLogout = () => {
+  // Remove user and token from localStorage
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
+  // Optionally clear other session data
+
+  // Redirect to login page
+  router.push('/');
+};
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -199,7 +209,7 @@ export default function DoctorTasksPage() {
           
           {/* User Actions */}
           <div className="mt-8 pt-6 border-t border-slate-200">
-            <button className="w-full flex items-center space-x-3 text-slate-600 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors">
+            <button onClick={handleLogout} className="w-full flex items-center space-x-3 text-slate-600 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>

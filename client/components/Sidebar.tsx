@@ -14,7 +14,7 @@ const Sidebar: React.FC = () => {
       name: 'Dashboard',
       icon: '📊',
       count: 25,
-      href: '/'
+      href: '/pages/Dashbord'
     },
     {
       name: 'Completed Tasks',

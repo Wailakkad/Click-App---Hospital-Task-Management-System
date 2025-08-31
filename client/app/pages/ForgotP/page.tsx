@@ -6,6 +6,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [resetLink, setResetLink] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error' | ''>('')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,6 +35,7 @@ export default function ForgotPasswordPage() {
 
       if (response.ok) {
         setMessage(data.message || 'Password reset email sent successfully!')
+        setResetLink(data.resetLink || ''); // <-- Add this line
         setMessageType('success')
         setEmail('')
       } else {
@@ -86,6 +88,13 @@ export default function ForgotPasswordPage() {
                   : 'bg-red-50 text-red-700 border border-red-200'
               }`}>
                 {message}
+                {messageType === 'success' && resetLink && (
+                  <div className="mt-4 text-center">
+                    <a href={resetLink} className="inline-block px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 transition-colors">
+                       Open Password Reset Link
+                    </a>
+                    </div>
+                )}
               </div>
             )}
 

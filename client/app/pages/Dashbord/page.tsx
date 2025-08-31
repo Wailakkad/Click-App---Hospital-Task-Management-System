@@ -8,7 +8,8 @@ import Sidebar from '@/components/Sidebar';
 import TopBar from '@/components/TopBar';
 import TaskCard from '@/components/TaskCard';
 import FilterButtons from '@/components/FilterButtons';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
+
 
 // Types
 interface User {
@@ -112,9 +113,11 @@ function AdminTaskAssignment({ onClose }: AdminTaskAssignmentProps) {
         setUsers(userData);
       } else {
         console.error('Failed to fetch users');
+        toast.error('Failed to fetch users');
       }
     } catch (error) {
       console.error('Error fetching users:', error);
+      toast.error('Server error occurred while fetching users');
     }
   };
 
@@ -128,7 +131,7 @@ function AdminTaskAssignment({ onClose }: AdminTaskAssignmentProps) {
     e.preventDefault();
     
     if (!formData.title || !formData.description || !formData.assignedTo) {
-      alert('All fields are required');
+      toast.error('Please fill in all fields and select a user');
       return;
     }
 
@@ -148,17 +151,17 @@ function AdminTaskAssignment({ onClose }: AdminTaskAssignmentProps) {
       const data = await response.json();
 
       if (response.ok) {
-        alert('Task created successfully!');
+        toast.success('Task created successfully' , { duration: 3000 });
         // Reset form and close modal
         setFormData({ title: '', description: '', assignedTo: '' });
         setSelectedUser(null);
         onClose(); // Close the task creation view
       } else {
-        alert(data.message || 'Failed to create task');
+        toast.error(data.message || 'Error creating task. Please try again.');
       }
     } catch (error) {
       console.error('Error creating task:', error);
-      alert('Server error occurred');
+      toast.error('Server error occurred while creating task');
     } finally {
       setIsLoading(false);
     }
@@ -175,6 +178,7 @@ function AdminTaskAssignment({ onClose }: AdminTaskAssignmentProps) {
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+      
       {/* Header with Back Button */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
@@ -536,6 +540,7 @@ export default function Home() {
   // Main dashboard content
   return (
     <div className="flex min-h-screen bg-gray-50">
+      <Toaster  reverseOrder={false} />
       <Sidebar />
       <main className="flex-1 ml-0 lg:ml-64">
         <TopBar />

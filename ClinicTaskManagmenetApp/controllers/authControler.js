@@ -78,9 +78,10 @@ exports.forgotPassword = async (req, res) => {
         const user = await User.findOne({ email });
          // Always return the same response for privacy, even if user not found
           if (!user) {
-              return res.json({
+              return res.status(404).json({
+
                message:
-                 "If an account exists for that email, a reset link has been generated.",
+                 "this email is not registered.",
               });
            }
            const token = crypto.randomBytes(32).toString("hex");
@@ -106,7 +107,8 @@ exports.forgotPassword = async (req, res) => {
 
     return res.json({
       message:
-        "If an account exists for that email, a reset link has been generated.",
+        "the reset link has been generated.",
+        resetLink, // Remove or comment out this line in production
     });
           
     }
@@ -144,7 +146,7 @@ if (record.createdAt.getTime() + expiryMs < Date.now()) {
     // Single-use token: delete after use
     await resetToken.deleteOne({ _id: record._id });
 
-    return res.json({ message: "Password has been reset successfully" });
+    return res.status(200).json({ message: "Password has been reset successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
