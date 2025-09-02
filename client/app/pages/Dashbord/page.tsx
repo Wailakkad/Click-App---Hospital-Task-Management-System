@@ -7,6 +7,7 @@ import { ChevronDownIcon, UserIcon, ArrowLeftIcon } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import TopBar from '@/components/TopBar';
 import TaskCard from '@/components/TaskCard';
+import CompletedTasks from '@/components/CompletedTasks';
 import FilterButtons from '@/components/FilterButtons';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -362,6 +363,7 @@ function AdminTaskAssignment({ onClose }: AdminTaskAssignmentProps) {
 // Main Home Component
 export default function Home() {
   const [selectedFilter, setSelectedFilter] = useState<string>('ALL');
+  const [activeSection, setActiveSection] = useState('Dashboard');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -541,11 +543,13 @@ export default function Home() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Toaster  reverseOrder={false} />
-      <Sidebar />
+      <Sidebar  onSectionChange={setActiveSection}/>
       <main className="flex-1 ml-0 lg:ml-64">
         <TopBar />
         <div className="p-4 lg:p-6">
-          <div className="mb-6">
+          {activeSection === 'Dashboard' && (
+            <div>
+              <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-900">Medical Tasks</h2>
               <div className="flex space-x-3">
@@ -591,6 +595,12 @@ export default function Home() {
               )}
             </>
           )}
+            </div>
+          )}
+          {activeSection === 'Completed Tasks' && (
+            <CompletedTasks />
+          )}
+          
         </div>
       </main>
     </div>

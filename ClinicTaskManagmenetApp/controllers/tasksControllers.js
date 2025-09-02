@@ -53,3 +53,24 @@ exports.getTasksByUser = async (req, res) => {
     res.status(500).json({ message: 'Server error', error });
   }
 };
+
+
+exports.GetCompletedTasks = async (req , res) => {
+
+  try{
+
+     if(req.user.role !== 'admin'){
+        return res.status(403).json({ message: 'Forbidden: Only admins can view all completed tasks' });
+     }
+
+     const completedTasks = await Task.find({ status: 'completed' }).populate('assegnedTo', 'name email role profileImage');
+      res.status(200).json(completedTasks);
+
+  }catch(err){
+
+    console.log(err);
+    res.status(500).json({ message: 'Server error' });
+
+  }
+}
+

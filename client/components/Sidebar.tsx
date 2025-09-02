@@ -4,10 +4,14 @@ import Link from 'next/link';
 import { MenuItem } from '../types';
 import toast, { Toaster } from 'react-hot-toast';
 
+interface SidebarProps {
+  onSectionChange?: (section: string) => void;
+}
 
-const Sidebar: React.FC = () => {
+const Sidebar: React.FC<SidebarProps> = ({onSectionChange}) => {
   const [activeItem, setActiveItem] = useState<string>('Dashboard');
   const router = useRouter();
+  
 
   const menuItems: MenuItem[] = [
     {
@@ -71,13 +75,15 @@ const Sidebar: React.FC = () => {
         <ul className="space-y-2">
           {menuItems.map((item) => (
             <li key={item.name}>
-              <Link href={item.href}>
+              
                 <div
                   className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 group hover:bg-white/30 ${
                     activeItem === item.name ? 'bg-white/40 shadow-sm' : ''
                   }`}
-                  onClick={() => setActiveItem(item.name)}
-                >
+                  onClick={() => { 
+                     setActiveItem(item.name);
+                     onSectionChange && onSectionChange(item.name)}}
+                  >
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow duration-200">
                       <span className="text-lg">{item.icon}</span>
@@ -94,7 +100,7 @@ const Sidebar: React.FC = () => {
                     </span>
                   )}
                 </div>
-              </Link>
+              
             </li>
           ))}
         </ul>
