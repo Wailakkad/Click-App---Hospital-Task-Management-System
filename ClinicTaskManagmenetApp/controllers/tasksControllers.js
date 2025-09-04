@@ -63,7 +63,7 @@ exports.GetCompletedTasks = async (req , res) => {
         return res.status(403).json({ message: 'Forbidden: Only admins can view all completed tasks' });
      }
 
-     const completedTasks = await Task.find({ status: 'completed' }).populate('assegnedTo', 'name email role profileImage');
+     const completedTasks = await Task.find({ status: 'pending' }).populate('assegnedTo', 'name email role profileImage');
       res.status(200).json(completedTasks);
 
   }catch(err){

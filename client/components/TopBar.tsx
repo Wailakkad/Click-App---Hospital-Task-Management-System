@@ -1,6 +1,8 @@
 import { useState, ChangeEvent } from 'react';
-
-const TopBar: React.FC = () => {
+interface TopBarProps {
+  onAddStaff: () => void;
+}
+const TopBar: React.FC<TopBarProps> = ({onAddStaff}) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -38,8 +40,8 @@ const TopBar: React.FC = () => {
             />
           </div>
           
-          <button className="bg-black text-white px-4 lg:px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition-colors duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-transform">
-            Create New Task
+          <button onClick={onAddStaff} className="bg-black text-white px-4 lg:px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition-colors duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-transform">
+            Create New stuff
           </button>
         </div>
       </div>

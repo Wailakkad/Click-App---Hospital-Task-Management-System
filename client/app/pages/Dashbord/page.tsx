@@ -8,6 +8,7 @@ import Sidebar from '@/components/Sidebar';
 import TopBar from '@/components/TopBar';
 import TaskCard from '@/components/TaskCard';
 import CompletedTasks from '@/components/CompletedTasks';
+import AddNewStaff from '@/components/NewStuffSection';
 import FilterButtons from '@/components/FilterButtons';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -364,6 +365,7 @@ function AdminTaskAssignment({ onClose }: AdminTaskAssignmentProps) {
 export default function Home() {
   const [selectedFilter, setSelectedFilter] = useState<string>('ALL');
   const [activeSection, setActiveSection] = useState('Dashboard');
+  const [showAddStaff, setShowAddStaff] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -495,7 +497,7 @@ export default function Home() {
       <div className="flex min-h-screen bg-gray-50">
         <Sidebar />
         <main className="flex-1 ml-0 lg:ml-64">
-          <TopBar />
+          <TopBar onAddStaff={() => setShowAddStaff(true)} />
           <div className="p-4 lg:p-6 flex items-center justify-center">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -513,7 +515,7 @@ export default function Home() {
       <div className="flex min-h-screen bg-gray-50">
         <Sidebar />
         <main className="flex-1 ml-0 lg:ml-64">
-          <TopBar />
+          <TopBar onAddStaff={() => setShowAddStaff(true)} />
           <div className="p-4 lg:p-6">
             <div className="bg-red-50 border border-red-200 rounded-md p-4">
               <div className="flex">
@@ -545,9 +547,15 @@ export default function Home() {
       <Toaster  reverseOrder={false} />
       <Sidebar  onSectionChange={setActiveSection}/>
       <main className="flex-1 ml-0 lg:ml-64">
-        <TopBar />
-        <div className="p-4 lg:p-6">
-          {activeSection === 'Dashboard' && (
+        <TopBar onAddStaff={() => setShowAddStaff(true)} />
+         <div className="p-4 lg:p-6">
+  {showAddStaff && (
+    <AddNewStaff onClose={() => setShowAddStaff(false)} />
+  )}
+
+  {!showAddStaff && (
+    <>
+       {activeSection === 'Dashboard' && (
             <div>
               <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
@@ -600,8 +608,9 @@ export default function Home() {
           {activeSection === 'Completed Tasks' && (
             <CompletedTasks />
           )}
-          
-        </div>
+    </>
+  )}
+</div>
       </main>
     </div>
   );
